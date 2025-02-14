@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { io, Socket } from 'socket.io-client';
 import { ref } from 'vue';
 
-const socket: Socket = io(import.meta.env.VITE_WEBSOCKET_SERVER);
 const constraints: MediaStreamConstraints = {
     audio: true,
     video: true,
