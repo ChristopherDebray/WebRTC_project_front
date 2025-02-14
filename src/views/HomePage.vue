@@ -17,15 +17,13 @@ socket.on("testReceived", () => {
 </script>
 
 <template>
-    <div>
-        <Suspense>
-            <VideoManager />
+    <Suspense>
+        <VideoManager />
 
-            <template #fallback>
-                Loading...
-            </template>
-        </Suspense>
-    </div>
+        <template #fallback>
+            Loading...
+        </template>
+    </Suspense>
 </template>
 
 <style scoped></style>
