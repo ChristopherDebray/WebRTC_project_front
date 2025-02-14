@@ -9,7 +9,7 @@ const constraints: MediaStreamConstraints = {
 };
 
 let camStream: MediaStream | null = null;
-const screenStream: MediaStream | null = null;
+let screenStream: MediaStream | null = null;
 
 const ownVideo = ref<HTMLVideoElement | null>(null);
 const ownScreen = ref<HTMLVideoElement | null>(null);
@@ -31,6 +31,22 @@ const stopCamStream = () => {
     });
 }
 
+const startScreenStream = async () => {
+    screenStream = await navigator.mediaDevices.getDisplayMedia()
+    if (ownScreen.value) {
+        ownScreen.value.srcObject = screenStream;
+    }
+}
+
+const stopScreenStream = async () => {
+    if (null == screenStream) {
+        return
+    }
+
+    screenStream.getTracks().forEach(track => {
+        track.stop()
+    });
+}
 </script>
 
 <template>
@@ -39,6 +55,11 @@ const stopCamStream = () => {
             <button @click="startCamStream">Start cam</button>
             <button @click="stopCamStream">Stop cam</button>
             <video ref="ownVideo" autoplay playsinline controls></video>
+        </div>
+        <div>
+            <button @click="startScreenStream">Start screen share</button>
+            <button @click="stopScreenStream">Stop screen share</button>
+            <video ref="ownScreen" autoplay playsinline controls></video>
         </div>
     </div>
 </template>
