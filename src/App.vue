@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
+import { io } from 'socket.io-client';
+
+const socket = io('wss://192.168.0.12:3000');
+
+socket.on('connection', () => {
+  console.log('connected to websocket server');
+})
 </script>
 
 <template>
