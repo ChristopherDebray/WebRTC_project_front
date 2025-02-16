@@ -35,9 +35,16 @@ export const useSocketStore = defineStore('socket', {
         this.isConnected = true;
       });
 
-      this.socket.on('newConnectedUsers', (newConnectedUsers: UserSocket[]) => {
-        console.log('Received new connected users:', newConnectedUsers);
-        this.connectedUsers = newConnectedUsers;
+      this.socket.on('newConnectedUsers', (newConnectedUser: UserSocket) => {
+        if (!this.socket || newConnectedUser.socketId === this.socket.id) {
+            return
+        }
+
+        this.connectedUsers.push(newConnectedUser);
+      });
+
+      this.socket.on('connectedUsersList', (connectedUsers: UserSocket[]) => {
+        this.connectedUsers = connectedUsers;
       });
 
       this.socket.on('disconnect', () => {
