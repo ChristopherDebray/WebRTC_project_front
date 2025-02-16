@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import router from '@/router';
 import type { UserSocket } from '@/stores/socket';
 import { mergeProps, ref } from 'vue';
 
@@ -42,7 +43,7 @@ const menu = ref(false)
             <v-divider></v-divider>
 
             <v-list>
-                <v-list-item>
+                <v-list-item @click="router.push('/call')">
                     <v-icon icon="mdi-phone"></v-icon>
                     <span class="pl-2">
                         Call
