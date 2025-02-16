@@ -1,3 +1,18 @@
+const avatarColors: string[] = [
+    'secondary',
+    'red',
+    'pink',
+    'blue',
+    'green',
+    'purple',
+    'cyan',
+    'teal',
+    'amber',
+    'deep-orange',
+    'brown',
+    'blue-grey',
+]
+
 export function getAvatarInitials(userName: string | null): string {
     if (null === userName) {
         return '?'
@@ -14,4 +29,8 @@ export function getAvatarInitials(userName: string | null): string {
     }
 
     return userName.charAt(0).toUpperCase();
+}
+
+export function getAvatarRandomColor(): string {
+    return avatarColors[Math.floor(Math.random() * avatarColors.length)];
 }

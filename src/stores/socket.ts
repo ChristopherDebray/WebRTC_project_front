@@ -1,9 +1,11 @@
+import { getAvatarInitials, getAvatarRandomColor } from '@/utils/avatarUtils';
 import { defineStore } from 'pinia';
 import { io, Socket } from 'socket.io-client';
-
 interface UserSocket {
     socketId: string;
     userName: string;
+    userColor: string;
+    userInitials: string;
 }
 
 export const useSocketStore = defineStore('socket', {
@@ -25,6 +27,8 @@ export const useSocketStore = defineStore('socket', {
         auth: {
           userName,
           password,
+          userColor: getAvatarRandomColor(),
+          userInitials: getAvatarInitials(userName)
         },
       });
 
