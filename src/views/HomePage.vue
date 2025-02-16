@@ -1,18 +1,13 @@
 <script setup lang="ts">
-import { io } from 'socket.io-client';
-import VideoManager from '@/components/medias/VideoManager.vue'
-import { ref } from 'vue';
-const socket = io(import.meta.env.VITE_WEBSOCKET_SERVER, {
-    auth: {
-        userName: '',
-        password: ''
-    }
-});
-const peer = ref<RTCPeerConnection | null>(null);
+import LoginForm from '@/components/auth/LoginForm.vue'
+import { useSocketStore } from '@/stores/socket';
+import { computed, ref } from 'vue';
 
-socket.on('connect', () => {
-    console.log('connected to socket server');
-})
+const peer = ref<RTCPeerConnection | null>(null);
+const isConnected = ref<boolean>(false);
+const socketStore = useSocketStore();
+const connectedUsers = computed(() => socketStore.connectedUsers);
+
 
 const peerConfiguration = {
     iceServers: [
@@ -24,6 +19,10 @@ const peerConfiguration = {
             ]
         }
     ]
+}
+
+const onLogin = () => {
+    isConnected.value = true
 }
 
 /**
@@ -76,13 +75,14 @@ const answerCall = async (offer: RTCSessionDescription) => {
 </script>
 
 <template>
-    <Suspense>
-        <VideoManager />
-
-        <template #fallback>
-            Loading...
-        </template>
-    </Suspense>
+    <div v-if="false === isConnected">
+        <LoginForm @loggedIn="onLogin" />
+    </div>
+    <div v-else>
+        <div v-for="user in connectedUsers" :key="`user-${user.socketId}`">
+            {{ user.userName }}
+        </div>
+    </div>
 </template>
 
 <style scoped></style>
