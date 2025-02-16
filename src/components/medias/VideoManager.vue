@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import router from '@/router';
 import { ref } from 'vue';
 
 const constraints: MediaStreamConstraints = {
@@ -12,11 +13,24 @@ let screenStream: MediaStream | null = null;
 const ownVideo = ref<HTMLVideoElement | null>(null);
 const ownScreen = ref<HTMLVideoElement | null>(null);
 const displaySmallVideo = ref<boolean>(false);
+const isCamShared = ref<boolean>(false);
+const isScreenShared = ref<boolean>(false);
+
+const toggleCamStream = async () => {
+    if (true === isCamShared.value) {
+        stopCamStream()
+        return
+    }
+
+    await startCamStream()
+}
 
 const startCamStream = async () => {
     camStream = await navigator.mediaDevices.getUserMedia(constraints);
+    isCamShared.value = true
     if (ownVideo.value) {
-        ownVideo.value.srcObject = camStream;
+        const videoStream = new MediaStream(camStream.getVideoTracks())
+        ownVideo.value.srcObject = videoStream;
         displaySmallVideo.value = true
     }
 }
@@ -26,6 +40,7 @@ const stopCamStream = () => {
         return
     }
 
+    isCamShared.value = false
     camStream.getTracks().forEach(track => {
         track.stop()
     });
@@ -33,37 +48,55 @@ const stopCamStream = () => {
     displaySmallVideo.value = false
 }
 
+const toggleScreenStream = async () => {
+    if (true === isScreenShared.value) {
+        stopScreenStream()
+        return
+    }
+
+    await startScreenStream()
+}
+
 const startScreenStream = async () => {
     screenStream = await navigator.mediaDevices.getDisplayMedia()
+    isScreenShared.value = true
     if (ownScreen.value) {
         ownScreen.value.srcObject = screenStream;
     }
 }
 
-const stopScreenStream = async () => {
+const stopScreenStream = () => {
     if (null == screenStream) {
         return
     }
 
+    isScreenShared.value = false
     screenStream.getTracks().forEach(track => {
         track.stop()
     });
     screenStream = null
+    ownScreen.value.srcObject = null
+}
+
+const hangUp = () => {
+    router.push('/login')
 }
 </script>
 
 <template>
     <div class="video_page">
         <video class="video_full_page" ref="ownScreen" autoplay playsinline></video>
-        <video class="video_small_picture" ref="ownVideo" autoplay playsinline controls
+        <video class="video_small_picture" ref="ownVideo" autoplay playsinline controls height="200"
             v-show="displaySmallVideo"></video>
 
         <div class="action_bar">
-            <button class="btn" @click="startCamStream">Start cam</button>
-            <button class="btn" @click="stopCamStream">Stop cam</button>
-            |
-            <button class="btn" @click="startScreenStream">Start screen share</button>
-            <button class="btn" @click="stopScreenStream">Stop screen share</button>
+            <v-btn size="small" class="ma-2" :color="isCamShared ? 'orange-lighten-2' : 'grey-darken-2'"
+                :icon="isCamShared ? 'mdi-video-off' : 'mdi-video'" @click="toggleCamStream"></v-btn>
+
+            <v-btn size="small" class="ma-2" :color="isScreenShared ? 'orange-lighten-2' : 'grey-darken-2'"
+                :icon="isScreenShared ? 'mdi-monitor-off' : 'mdi-monitor'" @click="toggleScreenStream"></v-btn>
+
+            <v-btn class="ma-2" color="red" size="small" icon="mdi-phone-hangup" @click="hangUp"></v-btn>
         </div>
     </div>
 </template>
@@ -100,7 +133,7 @@ const stopScreenStream = async () => {
     border-radius: 9999px;
     display: inline-flex;
     justify-content: space-around;
-    padding: 8px 10px;
+    padding: 0px 8px;
 }
 
 .action_bar .btn {
