@@ -1,7 +1,7 @@
 import { getAvatarInitials, getAvatarRandomColor } from '@/utils/avatarUtils';
 import { defineStore } from 'pinia';
 import { io, Socket } from 'socket.io-client';
-interface UserSocket {
+export interface UserSocket {
     socketId: string;
     userName: string;
     userColor: string;
@@ -12,6 +12,8 @@ export const useSocketStore = defineStore('socket', {
   state: () => ({
     socket: null as Socket | null,
     userName: null as string | null,
+    userColor: undefined as string | undefined,
+    userInitials: null as string | null,
     isConnected: false,
     connectedUsers: [] as UserSocket[],
   }),
@@ -23,16 +25,20 @@ export const useSocketStore = defineStore('socket', {
         return;
       }
 
+      const userColor = getAvatarRandomColor();
+      const userInitials = getAvatarInitials(userName);
       this.socket = io(import.meta.env.VITE_WEBSOCKET_SERVER, {
         auth: {
           userName,
           password,
-          userColor: getAvatarRandomColor(),
-          userInitials: getAvatarInitials(userName)
+          userColor,
+          userInitials
         },
       });
 
       this.userName = userName;
+      this.userColor = userColor;
+      this.userInitials = userInitials;
 
       this.socket.on('connect', () => {
         console.log('Connected to WebSocket server');
