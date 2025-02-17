@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import router from '@/router';
-import type { UserSocket } from '@/stores/socket';
+import { useSocketStore, type UserSocket } from '@/stores/socket';
 import { mergeProps, ref } from 'vue';
 
 defineProps<{
     user: UserSocket
 }>()
+
+const socketStore = useSocketStore();
 const menu = ref(false)
 </script>
 
@@ -43,7 +44,7 @@ const menu = ref(false)
             <v-divider></v-divider>
 
             <v-list>
-                <v-list-item @click="router.push('/call')">
+                <v-list-item @click.once="socketStore.call(user)">
                     <v-icon icon="mdi-phone"></v-icon>
                     <span class="pl-2">
                         Call

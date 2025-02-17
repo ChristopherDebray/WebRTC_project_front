@@ -2,11 +2,14 @@
 import { computed, ref, watchEffect } from 'vue';
 import { useSocketStore } from '@/stores/socket';
 import UserMenuItem from '@/components/navigations/UserMenuItem.vue';
+import CallReaction from '@/components/navigations/CallReaction.vue';
 
 const socketStore = useSocketStore();
 const connectedUsers = ref(socketStore.connectedUsers);
+const incomingUserCall = ref(socketStore.incomingUserCall);
 watchEffect(() => {
     connectedUsers.value = socketStore.connectedUsers; // Ensure reactivity
+    incomingUserCall.value = socketStore.incomingUserCall;
 });
 const drawer = ref<boolean>(true);
 const isMobile = computed(() => window.innerWidth <= 600);
@@ -41,6 +44,8 @@ const isMobile = computed(() => window.innerWidth <= 600);
         <v-main :class="{ 'd-flex align-center justify-center relative': true, 'is_open_menu': drawer }"
             :style="{ '--v-layout-left': drawer ? '72px' : '0px' }">
             <slot></slot>
+
+            <CallReaction v-if="incomingUserCall" />
         </v-main>
     </v-layout>
 </template>

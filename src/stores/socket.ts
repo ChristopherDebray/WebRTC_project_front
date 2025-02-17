@@ -14,8 +14,12 @@ export const useSocketStore = defineStore('socket', {
     userName: null as string | null,
     userColor: undefined as string | undefined,
     userInitials: null as string | null,
+    user: null as null | UserSocket,
     isConnected: false,
     connectedUsers: [] as UserSocket[],
+    outgoingCallUser: null as null | UserSocket,
+    incomingUserCall: null as null | UserSocket,
+    calledUser: null as null | UserSocket,
   }),
 
   actions: {
@@ -25,6 +29,8 @@ export const useSocketStore = defineStore('socket', {
         return;
       }
 
+      console.log('CONNECTIOn');
+      
       const userColor = getAvatarRandomColor();
       const userInitials = getAvatarInitials(userName);
       this.socket = io(import.meta.env.VITE_WEBSOCKET_SERVER, {
@@ -40,13 +46,20 @@ export const useSocketStore = defineStore('socket', {
       this.userColor = userColor;
       this.userInitials = userInitials;
 
+      this.user = {
+        socketId: this.socket.id,
+        userName,
+        userColor,
+        userInitials,
+      }
+
       this.socket.on('connect', () => {
         console.log('Connected to WebSocket server');
         this.isConnected = true;
       });
 
-      this.socket.on('newConnectedUsers', (newConnectedUser: UserSocket) => {
-        if (!this.socket || newConnectedUser.socketId === this.socket.id) {
+      this.socket.on('newConnectedUser', (newConnectedUser: UserSocket) => {
+        if (!this.socket) {
             return
         }
 
@@ -57,8 +70,14 @@ export const useSocketStore = defineStore('socket', {
         this.connectedUsers = connectedUsers;
       });
 
+      this.socket.on('callingUser', (callingUser) => {
+        console.log('callingUser', callingUser);
+        
+        this.incomingUserCall = callingUser;
+      })
+
       this.socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server');
+        console.error('Disconnected from WebSocket server');
         this.isConnected = false;
         this.userName = null;
       });
@@ -70,5 +89,36 @@ export const useSocketStore = defineStore('socket', {
         this.socket = null;
       }
     },
+
+    call(calledUser: UserSocket) {
+      if (!this.socket) return
+      this.calledUser = calledUser;
+      this.socket.emit('callUser', calledUser, this.user)
+    },
+
+    hangUp() {
+
+    },
+
+    rejectCall() {
+      this.socket.emit('rejectCall', this.incomingUserCall)
+      this.incomingUserCall = null;
+      /**
+       * @todo 
+       *    Change var names, one for currentCallUser that is the one you are in call with
+       *    One for the incomming call
+       *    One for the outputed call (user you are trying to reach) 
+       */
+    },
+
+    acceptCall() {
+      /**
+       * @todo 
+       *  put the user video room
+       *    Once the other user is in
+       *      Make webRTC connection
+       */
+      this.socket.emit('acceptCall', this.incomingUserCall)
+    }
   },
 });
