@@ -16,10 +16,8 @@ const isMobile = computed(() => window.innerWidth <= 600);
     <v-layout class="rounded rounded-md relative">
         <v-btn class="menu_btn" icon="mdi-menu" size="28" @click="drawer = !drawer">
         </v-btn>
-        <v-app-bar color="grey-lighten-2" name="app-bar" height="39">
-        </v-app-bar>
 
-        <v-navigation-drawer color="grey-darken-2" :style="{
+        <v-navigation-drawer color="grey-darken-2" class="pt-12" :style="{
             width: isMobile ? '100%' : '70px',
             transform: drawer ? 'translateX(0)' : (isMobile ? 'translateX(-100%)' : 'translateX(-72px)')
         }" name="drawer" v-model="drawer">
@@ -40,21 +38,26 @@ const isMobile = computed(() => window.innerWidth <= 600);
             </v-list-item>
         </v-navigation-drawer>
 
-        <v-main class="d-flex align-center justify-center" style="min-height: 300px;">
+        <v-main :class="{ 'd-flex align-center justify-center relative': true, 'is_open_menu': drawer }"
+            :style="{ '--v-layout-left': drawer ? '72px' : '0px' }">
             <slot></slot>
         </v-main>
-
-        <v-footer name="footer" app>
-            <slot name="footer"></slot>
-        </v-footer>
     </v-layout>
 </template>
 
 <style scoped>
 .menu_btn {
     position: absolute;
-    left: 18px;
-    top: 4px;
+    left: 16px;
+    top: 8px;
     z-index: 10000;
+}
+
+.main {
+    --v-layout-bottom: 0px;
+}
+
+main.is_open_menu {
+    --v-layout-left: 76px;
 }
 </style>

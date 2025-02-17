@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import router from '@/router';
+import { useSocketStore } from '@/stores/socket';
 import { ref } from 'vue';
 
 const constraints: MediaStreamConstraints = {
@@ -15,6 +15,7 @@ const ownScreen = ref<HTMLVideoElement | null>(null);
 const displaySmallVideo = ref<boolean>(false);
 const isCamShared = ref<boolean>(false);
 const isScreenShared = ref<boolean>(false);
+const socketStore = useSocketStore();
 
 const toggleCamStream = async () => {
     if (true === isCamShared.value) {
@@ -77,10 +78,6 @@ const stopScreenStream = () => {
     screenStream = null
     ownScreen.value.srcObject = null
 }
-
-const hangUp = () => {
-    router.push('/login')
-}
 </script>
 
 <template>
@@ -96,7 +93,7 @@ const hangUp = () => {
             <v-btn size="small" class="ma-2" :color="isScreenShared ? 'orange-lighten-2' : 'grey-darken-2'"
                 :icon="isScreenShared ? 'mdi-monitor-off' : 'mdi-monitor'" @click="toggleScreenStream"></v-btn>
 
-            <v-btn class="ma-2" color="red" size="small" icon="mdi-phone-hangup" @click="hangUp"></v-btn>
+            <v-btn class="ma-2" color="red" size="small" icon="mdi-phone-hangup" @click="socketStore.hangUp()"></v-btn>
         </div>
     </div>
 </template>
@@ -110,9 +107,13 @@ const hangUp = () => {
 
 .video_full_page {
     display: block;
-    margin: auto;
-    width: 99vw;
+    width: 100vw;
     height: 100vh;
+    transition: width 0.05s ease-in-out;
+}
+
+.is_open_menu .video_full_page {
+    width: calc(100vw - 72px);
 }
 
 .video_small_picture {
