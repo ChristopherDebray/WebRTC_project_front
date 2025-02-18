@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue';
 import { useSocketStore } from '@/stores/socket';
 import UserMenuItem from '@/components/navigations/UserMenuItem.vue';
-import CallReaction from '@/components/navigations/CallReaction.vue';
+import CallManager from '@/components/calls/CallManager.vue';
 
 const socketStore = useSocketStore();
 const connectedUsers = ref(socketStore.connectedUsers);
@@ -45,7 +45,7 @@ const isMobile = computed(() => window.innerWidth <= 600);
             :style="{ '--v-layout-left': drawer ? '72px' : '0px' }">
             <slot></slot>
 
-            <CallReaction v-if="incomingUserCall" />
+            <CallManager />
         </v-main>
     </v-layout>
 </template>

@@ -28,8 +28,6 @@ export const useSocketStore = defineStore('socket', {
         console.log('Already connected');
         return;
       }
-
-      console.log('CONNECTIOn');
       
       const userColor = getAvatarRandomColor();
       const userInitials = getAvatarInitials(userName);
@@ -46,16 +44,17 @@ export const useSocketStore = defineStore('socket', {
       this.userColor = userColor;
       this.userInitials = userInitials;
 
-      this.user = {
-        socketId: this.socket.id,
-        userName,
-        userColor,
-        userInitials,
-      }
-
       this.socket.on('connect', () => {
         console.log('Connected to WebSocket server');
         this.isConnected = true;
+        this.user = {
+          socketId: this.socket.id,
+          userName,
+          userColor,
+          userInitials,
+        }
+
+        console.log(this.user);
       });
 
       this.socket.on('newConnectedUser', (newConnectedUser: UserSocket) => {
@@ -71,8 +70,6 @@ export const useSocketStore = defineStore('socket', {
       });
 
       this.socket.on('callingUser', (callingUser) => {
-        console.log('callingUser', callingUser);
-        
         this.incomingUserCall = callingUser;
       })
 
@@ -81,6 +78,12 @@ export const useSocketStore = defineStore('socket', {
         this.isConnected = false;
         this.userName = null;
       });
+
+      this.socket.on('callRejected', () => {
+        console.log('callRejected');
+        
+        this.calledUser = null;
+      })
     },
 
     disconnect() {
@@ -93,6 +96,8 @@ export const useSocketStore = defineStore('socket', {
     call(calledUser: UserSocket) {
       if (!this.socket) return
       this.calledUser = calledUser;
+      console.log(this.user);
+      
       this.socket.emit('callUser', calledUser, this.user)
     },
 
@@ -101,6 +106,7 @@ export const useSocketStore = defineStore('socket', {
     },
 
     rejectCall() {
+      if (!this.socket) return
       this.socket.emit('rejectCall', this.incomingUserCall)
       this.incomingUserCall = null;
       /**
