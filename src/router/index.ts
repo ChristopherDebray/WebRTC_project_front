@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/views/HomePage.vue'
 import LoginPage from '@/views/LoginPage.vue'
 import CallPage from '@/views/CallPage.vue'
+import { useSocketStore } from '@/stores/socket'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -23,5 +24,17 @@ const router = createRouter({
     },
   ],
 })
+
+router.beforeEach((to, from, next) => {
+  const socketStore = useSocketStore(); // Now Pinia is available
+  const isAuthenticated = socketStore.socket !== null;
+
+  if (!isAuthenticated && to.name !== 'login') {
+    next({ name: 'login' });
+  } else {
+    next();
+  }
+});
+
 
 export default router

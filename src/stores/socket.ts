@@ -24,7 +24,7 @@ export const useSocketStore = defineStore('socket', {
   }),
 
   actions: {
-    connect(userName: string, password: string) {
+    connect(userName: string) {
       if (this.socket) {
         return;
       }
@@ -34,7 +34,6 @@ export const useSocketStore = defineStore('socket', {
       this.socket = io(import.meta.env.VITE_WEBSOCKET_SERVER, {
         auth: {
           userName,
-          password,
           userColor,
           userInitials
         },
@@ -117,8 +116,6 @@ export const useSocketStore = defineStore('socket', {
     hangUp() {
       if (!this.socket) return
       this.socket.emit('stopCall', this.outgoingCallUser)
-      console.log(this.outgoingCallUser);
-      
       this.outgoingCallUser = null;
       router.push('/home')
     },
@@ -146,7 +143,6 @@ export const useSocketStore = defineStore('socket', {
       this.socket.emit('acceptCall', this.incomingUserCall)
       this.outgoingCallUser = this.incomingUserCall
       this.incomingUserCall = null;
-      console.log(this.outgoingCallUser);
       router.push('/call')
     }
   },
