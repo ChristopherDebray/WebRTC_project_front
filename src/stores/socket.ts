@@ -85,7 +85,13 @@ export const useSocketStore = defineStore('socket', {
 
       this.socket.on('acceptedCall', () => {
         this.outgoingCallUser = this.calledUser
+        this.calledUser = null;
         router.push('/call')
+      })
+
+      this.socket.on('callStopped', () => {
+        this.outgoingCallUser = null;
+        router.push('/home')
       })
     },
 
@@ -107,9 +113,14 @@ export const useSocketStore = defineStore('socket', {
       this.calledUser = null;
       this.socket.emit('cancelCall', calledUser)
     },
-
+    
     hangUp() {
-
+      if (!this.socket) return
+      this.socket.emit('stopCall', this.outgoingCallUser)
+      console.log(this.outgoingCallUser);
+      
+      this.outgoingCallUser = null;
+      router.push('/home')
     },
 
     rejectCall() {
@@ -134,6 +145,8 @@ export const useSocketStore = defineStore('socket', {
       if (!this.socket) return
       this.socket.emit('acceptCall', this.incomingUserCall)
       this.outgoingCallUser = this.incomingUserCall
+      this.incomingUserCall = null;
+      console.log(this.outgoingCallUser);
       router.push('/call')
     }
   },
