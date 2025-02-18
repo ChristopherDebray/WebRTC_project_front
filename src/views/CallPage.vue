@@ -1,30 +1,9 @@
 <script setup lang="ts">
-import { io } from 'socket.io-client';
 import VideoManager from '@/components/medias/VideoManager.vue'
 import { ref } from 'vue';
-const socket = io(import.meta.env.VITE_WEBSOCKET_SERVER, {
-    auth: {
-        userName: '',
-        password: ''
-    }
-});
+import DefaultLayout from '@/layouts/DefaultLayout.vue';
+
 const peer = ref<RTCPeerConnection | null>(null);
-
-socket.on('connect', () => {
-    console.log('connected to socket server');
-})
-
-const peerConfiguration = {
-    iceServers: [
-        {
-            // Thoose are free servers from google
-            urls: [
-                'stun:stun.l.google.com:19302',
-                'stun:stun1.l.google.com:19302'
-            ]
-        }
-    ]
-}
 
 /**
  * Need an array
@@ -76,14 +55,7 @@ const answerCall = async (offer: RTCSessionDescription) => {
 </script>
 
 <template>
-    <Suspense>
-
-        <VideoManager />
-
-        <template #fallback>
-            Loading...
-        </template>
-    </Suspense>
+    <VideoManager />
 </template>
 
 <style scoped></style>

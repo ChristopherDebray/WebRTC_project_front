@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import VideoManager from '@/components/medias/VideoManager.vue';
-import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import { useSocketStore } from '@/stores/socket';
 import { storeToRefs } from 'pinia';
 
@@ -9,14 +8,14 @@ const { outgoingCallUser } = storeToRefs(socketStore)
 </script>
 
 <template>
-    <DefaultLayout>
+    <div>
         <div v-if="outgoingCallUser">
             <VideoManager />
         </div>
         <div v-else>
             Main Content
         </div>
-    </DefaultLayout>
+    </div>
 </template>
 
 <style scoped></style>
