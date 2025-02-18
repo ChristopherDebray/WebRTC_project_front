@@ -20,7 +20,7 @@ const socketStore = useSocketStore();
             </div>
             <div class="d-flex justify-space-around pt-4">
                 <v-btn class="ma-2" color="red" size="small" icon="mdi-phone-hangup"
-                    @click.once="socketStore.rejectCall"></v-btn>
+                    @click.once="socketStore.cancelCall(socketStore.calledUser)"></v-btn>
             </div>
         </div>
     </div>

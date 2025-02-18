@@ -25,7 +25,7 @@ const onSubmit = () => {
         <v-form fast-fail @submit.prevent="onSubmit">
             <v-text-field prepend-icon="mdi-account" v-model="userName" :rules="userNameRules" label="First name"
                 class="mb-3"></v-text-field>
-            <v-text-field prepend-icon="mdi-lock" v-model="password" :rules="passwordRules"
+            <v-text-field prepend-icon="mdi-lock" v-model="password" :rules="passwordRules" type="password"
                 label="Password"></v-text-field>
             <v-btn class="mt-3" type="submit" block color="success">Login</v-btn>
         </v-form>

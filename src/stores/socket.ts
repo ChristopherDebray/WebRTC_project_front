@@ -1,3 +1,4 @@
+import router from '@/router';
 import { getAvatarInitials, getAvatarRandomColor } from '@/utils/avatarUtils';
 import { defineStore } from 'pinia';
 import { io, Socket } from 'socket.io-client';
@@ -25,7 +26,6 @@ export const useSocketStore = defineStore('socket', {
   actions: {
     connect(userName: string, password: string) {
       if (this.socket) {
-        console.log('Already connected');
         return;
       }
       
@@ -45,7 +45,6 @@ export const useSocketStore = defineStore('socket', {
       this.userInitials = userInitials;
 
       this.socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
         this.isConnected = true;
         this.user = {
           socketId: this.socket.id,
@@ -53,8 +52,6 @@ export const useSocketStore = defineStore('socket', {
           userColor,
           userInitials,
         }
-
-        console.log(this.user);
       });
 
       this.socket.on('newConnectedUser', (newConnectedUser: UserSocket) => {
@@ -74,15 +71,21 @@ export const useSocketStore = defineStore('socket', {
       })
 
       this.socket.on('disconnect', () => {
-        console.error('Disconnected from WebSocket server');
         this.isConnected = false;
         this.userName = null;
       });
 
       this.socket.on('callRejected', () => {
-        console.log('callRejected');
-        
         this.calledUser = null;
+      })
+
+      this.socket.on('canceledCall', () => {
+        this.incomingUserCall = null;
+      })
+
+      this.socket.on('acceptedCall', () => {
+        this.outgoingCallUser = this.calledUser
+        router.push('/call')
       })
     },
 
@@ -96,9 +99,13 @@ export const useSocketStore = defineStore('socket', {
     call(calledUser: UserSocket) {
       if (!this.socket) return
       this.calledUser = calledUser;
-      console.log(this.user);
-      
       this.socket.emit('callUser', calledUser, this.user)
+    },
+
+    cancelCall(calledUser: UserSocket) {
+      if (!this.socket) return
+      this.calledUser = null;
+      this.socket.emit('cancelCall', calledUser)
     },
 
     hangUp() {
@@ -124,7 +131,10 @@ export const useSocketStore = defineStore('socket', {
        *    Once the other user is in
        *      Make webRTC connection
        */
+      if (!this.socket) return
       this.socket.emit('acceptCall', this.incomingUserCall)
+      this.outgoingCallUser = this.incomingUserCall
+      router.push('/call')
     }
   },
 });

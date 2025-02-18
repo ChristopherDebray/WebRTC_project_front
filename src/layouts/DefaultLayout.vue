@@ -23,7 +23,7 @@ const isMobile = computed(() => window.innerWidth <= 600);
         <v-navigation-drawer color="grey-darken-2" class="pt-12" :style="{
             width: isMobile ? '100%' : '70px',
             transform: drawer ? 'translateX(0)' : (isMobile ? 'translateX(-100%)' : 'translateX(-72px)')
-        }" name="drawer" v-model="drawer">
+        }" name="drawer" v-model="drawer" permanent>
             <v-list-item class="py-2">
                 <v-menu :close-on-content-click="false" location="end">
                     <template v-slot:activator="{ props }">
