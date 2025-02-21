@@ -13,6 +13,9 @@ watchEffect(() => {
 });
 const drawer = ref<boolean>(true);
 const isMobile = computed(() => window.innerWidth <= 600);
+
+// On page reload reconnects to the socket server
+socketStore.connect(socketStore.userName);
 </script>
 
 <template>
@@ -24,6 +27,10 @@ const isMobile = computed(() => window.innerWidth <= 600);
             width: isMobile ? '100%' : '70px',
             transform: drawer ? 'translateX(0)' : (isMobile ? 'translateX(-100%)' : 'translateX(-72px)')
         }" name="drawer" v-model="drawer" permanent>
+            <v-list-item class="py-2">
+                <v-icon icon="mdi-door" @click="socketStore.disconnect()"></v-icon>
+            </v-list-item>
+
             <v-list-item class="py-2">
                 <v-menu :close-on-content-click="false" location="end">
                     <template v-slot:activator="{ props }">
@@ -38,6 +45,10 @@ const isMobile = computed(() => window.innerWidth <= 600);
 
             <v-list-item v-for="user in connectedUsers" :key="`user-${user.socketId}`">
                 <UserMenuItem :user="user" />
+            </v-list-item>
+
+            <v-list-item>
+                {{ Math.random() }}
             </v-list-item>
         </v-navigation-drawer>
 

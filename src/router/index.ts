@@ -26,15 +26,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const socketStore = useSocketStore(); // Now Pinia is available
-  const isAuthenticated = socketStore.socket !== null;
+  const socketStore = useSocketStore() // Now Pinia is available
+  const isAuthenticated = socketStore.userName !== null
 
   if (!isAuthenticated && to.name !== 'login') {
-    next({ name: 'login' });
+    next({ name: 'login' })
+  } else if (isAuthenticated && to.name === 'login') {
+    next({ name: 'home' })
   } else {
-    next();
+    next()
   }
-});
-
+})
 
 export default router
