@@ -70,7 +70,12 @@ export const useSocketStore = defineStore('socket', {
         }
       })
 
-      this.socket.on('newConnectedUser', (newConnectedUser: UserSocket) => {
+      this.socket.on('disconnect', () => {
+        this.isConnected = false
+        this.userName = null
+      })
+
+      this.socket.on('user:new', (newConnectedUser: UserSocket) => {
         if (!this.socket) {
           return
         }
@@ -78,34 +83,29 @@ export const useSocketStore = defineStore('socket', {
         this.connectedUsers.push(newConnectedUser)
       })
 
-      this.socket.on('connectedUsersList', (connectedUsers: UserSocket[]) => {
+      this.socket.on('user:list', (connectedUsers: UserSocket[]) => {
         this.connectedUsers = connectedUsers
       })
 
-      this.socket.on('callingUser', (callingUser) => {
+      this.socket.on('call:receive', (callingUser) => {
         this.incomingUserCall = callingUser
       })
 
-      this.socket.on('disconnect', () => {
-        this.isConnected = false
-        this.userName = null
-      })
-
-      this.socket.on('callRejected', () => {
+      this.socket.on('call:rejected', () => {
         this.calledUser = null
       })
 
-      this.socket.on('canceledCall', () => {
+      this.socket.on('call:cancelled', () => {
         this.incomingUserCall = null
       })
 
-      this.socket.on('acceptedCall', () => {
+      this.socket.on('call:accepted', () => {
         this.outgoingCallUser = this.calledUser
         this.calledUser = null
         router.push('/call')
       })
 
-      this.socket.on('callStopped', () => {
+      this.socket.on('call:stopped', () => {
         this.outgoingCallUser = null
         router.push('/home')
       })
@@ -132,43 +132,31 @@ export const useSocketStore = defineStore('socket', {
     call(calledUser: UserSocket) {
       if (!this.socket) return
       this.calledUser = calledUser
-      this.socket.emit('callUser', calledUser, this.user)
+      this.socket.emit('call:new', calledUser, this.user)
     },
 
     cancelCall(calledUser: UserSocket) {
       if (!this.socket) return
       this.calledUser = null
-      this.socket.emit('cancelCall', calledUser)
+      this.socket.emit('call:cancel', calledUser)
     },
 
     hangUp() {
       if (!this.socket) return
-      this.socket.emit('stopCall', this.outgoingCallUser)
+      this.socket.emit('call:stop', this.outgoingCallUser)
       this.outgoingCallUser = null
       router.push('/home')
     },
 
     rejectCall() {
       if (!this.socket) return
-      this.socket.emit('rejectCall', this.incomingUserCall)
+      this.socket.emit('call:reject', this.incomingUserCall)
       this.incomingUserCall = null
-      /**
-       * @todo
-       *    Change var names, one for currentCallUser that is the one you are in call with
-       *    One for the incomming call
-       *    One for the outputed call (user you are trying to reach)
-       */
     },
 
     acceptCall() {
-      /**
-       * @todo
-       *  put the user video room
-       *    Once the other user is in
-       *      Make webRTC connection
-       */
       if (!this.socket) return
-      this.socket.emit('acceptCall', this.incomingUserCall)
+      this.socket.emit('call:accept', this.incomingUserCall)
       console.log(this.incomingUserCall)
 
       this.outgoingCallUser = this.incomingUserCall
