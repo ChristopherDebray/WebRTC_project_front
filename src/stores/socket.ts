@@ -2,11 +2,18 @@ import router from '@/router'
 import { getAvatarInitials, getAvatarRandomColor } from '@/utils/avatarUtils'
 import { defineStore } from 'pinia'
 import { io, Socket } from 'socket.io-client'
+import { ref } from 'vue'
+
 export interface UserSocket {
   socketId: string
   userName: string
   userColor: string
   userInitials: string
+  offer: RTCSessionDescription | null
+  answer: RTCSessionDescription | null
+  offererIceCandidates: RTCIceCandidate[]
+  answererIceCandidates: RTCIceCandidate[]
+  isCaller: boolean
 }
 
 export const useSocketStore = defineStore('socket', {
@@ -21,6 +28,15 @@ export const useSocketStore = defineStore('socket', {
     outgoingCallUser: null as null | UserSocket,
     incomingUserCall: null as null | UserSocket,
     calledUser: null as null | UserSocket,
+
+    isCaller: false as boolean,
+    peerConnection: null as null | RTCPeerConnection,
+    offererIceCandidates: [] as RTCIceCandidate[],
+    answererIceCandidates: [] as RTCIceCandidate[],
+    offer: null as null | RTCSessionDescription,
+    answer: null as null | RTCSessionDescription,
+    localStream: new MediaStream() as MediaStream,
+    remoteStream: ref<MediaStream>(new MediaStream()),
   }),
   persist: {
     pick: [
@@ -33,6 +49,8 @@ export const useSocketStore = defineStore('socket', {
       'outgoingCallUser',
       'incomingUserCall',
       'calledUser',
+
+      'isCaller',
     ],
   },
 
@@ -68,6 +86,8 @@ export const useSocketStore = defineStore('socket', {
           userColor: this.userColor,
           userInitials: this.userInitials,
         }
+
+        this.createPeerConnection()
       })
 
       this.socket.on('disconnect', () => {
@@ -102,12 +122,36 @@ export const useSocketStore = defineStore('socket', {
       this.socket.on('call:accepted', () => {
         this.outgoingCallUser = this.calledUser
         this.calledUser = null
+        this.isCaller = true
         router.push('/call')
       })
 
       this.socket.on('call:stopped', () => {
         this.outgoingCallUser = null
         router.push('/home')
+      })
+
+      this.socket.on('rtc:receive:answer', (answer) => {
+        this.peerConnection.setRemoteDescription(answer)
+        this.answer = answer
+      })
+
+      this.socket.on('rtc:receive:offer', (offer) => {
+        console.log('rtc:receive:offer remoteDescription setted')
+        this.peerConnection.setRemoteDescription(offer)
+
+        this.offer = offer
+        this.createAnswer()
+      })
+
+      this.socket.on('rtc:receive:iceCandidate', (candidate: RTCIceCandidate) => {
+        if (this.isCaller) {
+          this.answererIceCandidates.push(candidate)
+        } else {
+          this.offererIceCandidates.push(candidate)
+        }
+
+        this.peerConnection.addIceCandidate(candidate)
       })
     },
 
@@ -157,11 +201,64 @@ export const useSocketStore = defineStore('socket', {
     acceptCall() {
       if (!this.socket) return
       this.socket.emit('call:accept', this.incomingUserCall)
-      console.log(this.incomingUserCall)
+      this.isCaller = false
 
       this.outgoingCallUser = this.incomingUserCall
       this.incomingUserCall = null
       router.push('/call')
+    },
+
+    createPeerConnection() {
+      const config: RTCConfiguration = {
+        iceServers: [{ urls: ['stun:stun.l.google.com:19302'] }],
+      }
+
+      this.peerConnection = new RTCPeerConnection(config)
+      this.peerConnection.addEventListener('icecandidate', (e: RTCPeerConnectionIceEvent) => {
+        if (null === e.candidate) {
+          return
+        }
+        // Send the ice candidate to the other user
+        if (this.isCaller) {
+          this.offererIceCandidates.push(e.candidate)
+        } else {
+          this.answererIceCandidates.push(e.candidate)
+        }
+
+        this.socket.emit('rtc:send:iceCandidate', this.outgoingCallUser, e.candidate)
+      })
+
+      this.peerConnection.addEventListener('track', (e) => {
+        console.log("addEventListener('track')")
+
+        e.streams[0].getTracks().forEach((track) => {
+          console.log('ADD TRACK')
+
+          this.remoteStream.addTrack(track)
+        })
+      })
+    },
+
+    async createOffer() {
+      console.log('this.isCaller', this.isCaller)
+
+      if (!this.isCaller) {
+        return
+      }
+      const offer = await this.peerConnection.createOffer()
+      this.peerConnection.setLocalDescription(offer)
+      this.socket.emit('rtc:send:offer', this.outgoingCallUser, offer)
+      console.log('create offer')
+    },
+
+    async createAnswer() {
+      if (this.isCaller) {
+        return
+      }
+      const answer = await this.peerConnection.createAnswer()
+      this.peerConnection.setLocalDescription(answer)
+      this.socket.emit('rtc:send:answer', this.outgoingCallUser, answer)
+      console.log('create answer')
     },
   },
 })

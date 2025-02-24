@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useSocketStore } from '@/stores/socket';
-import { ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 const constraints: MediaStreamConstraints = {
     audio: true,
@@ -12,6 +12,7 @@ let screenStream: MediaStream | null = null;
 
 const ownVideo = ref<HTMLVideoElement | null>(null);
 const ownScreen = ref<HTMLVideoElement | null>(null);
+const callerVideo = ref<HTMLVideoElement | null>(null);
 const displaySmallVideo = ref<boolean>(false);
 const isCamShared = ref<boolean>(false);
 const isScreenShared = ref<boolean>(false);
@@ -34,6 +35,14 @@ const startCamStream = async () => {
         ownVideo.value.srcObject = videoStream;
         displaySmallVideo.value = true
     }
+
+    camStream.getTracks().forEach(track => {
+        console.log('add track from camStream');
+
+        socketStore.peerConnection.addTrack(track, camStream)
+    });
+
+    socketStore.createOffer()
 }
 
 const stopCamStream = () => {
@@ -64,6 +73,14 @@ const startScreenStream = async () => {
     if (ownScreen.value) {
         ownScreen.value.srcObject = screenStream;
     }
+
+    console.log(screenStream);
+
+    screenStream.getTracks().forEach(track => {
+        console.log('add track local');
+
+        socketStore.peerConnection.addTrack(track, screenStream)
+    });
 }
 
 const stopScreenStream = () => {
@@ -78,6 +95,15 @@ const stopScreenStream = () => {
     screenStream = null
     ownScreen.value.srcObject = null
 }
+
+onMounted(() => {
+    watch(() => socketStore.remoteStream, (newStream) => {
+        if (newStream && callerVideo.value) {
+            console.log("🎬 Updating caller video source!");
+            callerVideo.value.srcObject = newStream;
+        }
+    }, { immediate: true });
+});
 </script>
 
 <template>
@@ -85,6 +111,8 @@ const stopScreenStream = () => {
         <video class="video_full_page" ref="ownScreen" autoplay playsinline></video>
         <video class="video_small_picture" ref="ownVideo" autoplay playsinline controls height="200"
             v-show="displaySmallVideo"></video>
+
+        <video class="video_small_picture bottom" ref="callerVideo" autoplay playsinline controls height="200"></video>
 
         <div class="action_bar">
             <v-btn size="small" class="ma-2" :color="isCamShared ? 'orange-lighten-2' : 'grey-darken-2'"
@@ -122,6 +150,11 @@ const stopScreenStream = () => {
     right: 10px;
     border-radius: 10px;
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+}
+
+.video_small_picture.bottom {
+    bottom: 10px;
+    top: auto;
 }
 
 .action_bar {
