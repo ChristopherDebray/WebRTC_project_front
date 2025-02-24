@@ -13,6 +13,7 @@ let screenStream: MediaStream | null = null;
 const ownVideo = ref<HTMLVideoElement | null>(null);
 const ownScreen = ref<HTMLVideoElement | null>(null);
 const callerVideo = ref<HTMLVideoElement | null>(null);
+const callerScreenVideo = ref<HTMLVideoElement | null>(null);
 const displaySmallVideo = ref<boolean>(false);
 const isCamShared = ref<boolean>(false);
 const isScreenShared = ref<boolean>(false);
@@ -37,8 +38,6 @@ const startCamStream = async () => {
     }
 
     camStream.getTracks().forEach(track => {
-        console.log('add track from camStream');
-
         socketStore.peerConnection.addTrack(track, camStream)
     });
 
@@ -74,13 +73,17 @@ const startScreenStream = async () => {
         ownScreen.value.srcObject = screenStream;
     }
 
-    console.log(screenStream);
-
     screenStream.getTracks().forEach(track => {
-        console.log('add track local');
-
+        /**
+         * We would normaly use this content hint to define where to display / set the media stream
+         * But rtc doesn't keep theese value therefore this is useless
+         * 
+         * track.contentHint = 'screen';
+         */
         socketStore.peerConnection.addTrack(track, screenStream)
     });
+
+    socketStore.createOffer()
 }
 
 const stopScreenStream = () => {
@@ -99,8 +102,13 @@ const stopScreenStream = () => {
 onMounted(() => {
     watch(() => socketStore.remoteStream, (newStream) => {
         if (newStream && callerVideo.value) {
-            console.log("🎬 Updating caller video source!");
             callerVideo.value.srcObject = newStream;
+        }
+    }, { immediate: true });
+
+    watch(() => socketStore.remoteScreenStream, (newStream) => {
+        if (newStream && callerScreenVideo.value) {
+            callerScreenVideo.value.srcObject = newStream;
         }
     }, { immediate: true });
 });
@@ -112,7 +120,9 @@ onMounted(() => {
         <video class="video_small_picture" ref="ownVideo" autoplay playsinline controls height="200"
             v-show="displaySmallVideo"></video>
 
-        <video class="video_small_picture bottom" ref="callerVideo" autoplay playsinline controls height="200"></video>
+        <video class="video_small_picture bottom" ref="callerVideo" autoplay playsinline controls height="100"></video>
+        <video class="video_small_picture left bottom" ref="callerScreenVideo" autoplay playsinline controls
+            height="100"></video>
 
         <div class="action_bar">
             <v-btn size="small" class="ma-2" :color="isCamShared ? 'orange-lighten-2' : 'grey-darken-2'"
@@ -155,6 +165,10 @@ onMounted(() => {
 .video_small_picture.bottom {
     bottom: 10px;
     top: auto;
+}
+
+.video_small_picture.left {
+    left: 10px;
 }
 
 .action_bar {

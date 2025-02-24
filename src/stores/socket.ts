@@ -37,6 +37,7 @@ export const useSocketStore = defineStore('socket', {
     answer: null as null | RTCSessionDescription,
     localStream: new MediaStream() as MediaStream,
     remoteStream: ref<MediaStream>(new MediaStream()),
+    remoteScreenStream: ref<MediaStream>(new MediaStream()),
   }),
   persist: {
     pick: [
@@ -137,9 +138,7 @@ export const useSocketStore = defineStore('socket', {
       })
 
       this.socket.on('rtc:receive:offer', (offer) => {
-        console.log('rtc:receive:offer remoteDescription setted')
         this.peerConnection.setRemoteDescription(offer)
-
         this.offer = offer
         this.createAnswer()
       })
@@ -229,26 +228,27 @@ export const useSocketStore = defineStore('socket', {
       })
 
       this.peerConnection.addEventListener('track', (e) => {
-        console.log("addEventListener('track')")
+        if (e.streams.length > 0) {
+          const stream = e.streams[0]
 
-        e.streams[0].getTracks().forEach((track) => {
-          console.log('ADD TRACK')
-
-          this.remoteStream.addTrack(track)
-        })
+          if (stream.getVideoTracks().length > 0 && stream.getAudioTracks().length > 0) {
+            console.log('📷 Adding camera/mic stream')
+            this.remoteStream = stream
+          } else {
+            console.log('🖥️ Adding screen share stream')
+            this.remoteScreenStream = stream
+          }
+        }
       })
     },
 
     async createOffer() {
-      console.log('this.isCaller', this.isCaller)
-
       if (!this.isCaller) {
         return
       }
       const offer = await this.peerConnection.createOffer()
       this.peerConnection.setLocalDescription(offer)
       this.socket.emit('rtc:send:offer', this.outgoingCallUser, offer)
-      console.log('create offer')
     },
 
     async createAnswer() {
@@ -258,7 +258,6 @@ export const useSocketStore = defineStore('socket', {
       const answer = await this.peerConnection.createAnswer()
       this.peerConnection.setLocalDescription(answer)
       this.socket.emit('rtc:send:answer', this.outgoingCallUser, answer)
-      console.log('create answer')
     },
   },
 })
