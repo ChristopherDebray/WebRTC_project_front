@@ -37,11 +37,25 @@ const startCamStream = async () => {
         displaySmallVideo.value = true
     }
 
+    socketStore.peerConnection.getTransceivers().forEach(element => {
+        console.log(element);
+    });
+    const videoTransceiver = socketStore.peerConnection.getTransceivers().find(t => t.receiver.track?.kind === 'video');
+    const audioTransceiver = socketStore.peerConnection.getTransceivers().find(t => t.receiver.track?.kind === 'audio');
+
+    if (videoTransceiver) {
+        videoTransceiver.sender.replaceTrack(camStream.getVideoTracks()[0]);
+    }
+
+    if (audioTransceiver) {
+        audioTransceiver.sender.replaceTrack(camStream.getAudioTracks()[0]);
+    }
+
     camStream.getTracks().forEach(track => {
-        socketStore.peerConnection.addTrack(track, camStream)
+        console.log(track)
     });
 
-    socketStore.createOffer()
+    // socketStore.createOffer()
 }
 
 const stopCamStream = () => {
@@ -73,17 +87,13 @@ const startScreenStream = async () => {
         ownScreen.value.srcObject = screenStream;
     }
 
-    screenStream.getTracks().forEach(track => {
-        /**
-         * We would normaly use this content hint to define where to display / set the media stream
-         * But rtc doesn't keep theese value therefore this is useless
-         * 
-         * track.contentHint = 'screen';
-         */
-        socketStore.peerConnection.addTrack(track, screenStream)
-    });
+    screenStream.getVideoTracks().forEach((track) => {
+        console.log(track);
 
-    socketStore.createOffer()
+        const sender = socketStore.peerConnection.getSenders()[2];
+        console.error(socketStore.peerConnection.getSenders())
+        if (sender) sender.replaceTrack(track);
+    });
 }
 
 const stopScreenStream = () => {
@@ -99,7 +109,8 @@ const stopScreenStream = () => {
     ownScreen.value.srcObject = null
 }
 
-onMounted(() => {
+onMounted(async () => {
+    await socketStore.createOffer()
     watch(() => socketStore.remoteStream, (newStream) => {
         if (newStream && callerVideo.value) {
             callerVideo.value.srcObject = newStream;

@@ -124,12 +124,10 @@ export const useSocketStore = defineStore('socket', {
         this.outgoingCallUser = this.calledUser
         this.calledUser = null
         this.isCaller = true
-        router.push('/call')
       })
 
       this.socket.on('call:stopped', () => {
         this.outgoingCallUser = null
-        router.push('/home')
       })
 
       this.socket.on('rtc:receive:answer', (answer) => {
@@ -188,7 +186,6 @@ export const useSocketStore = defineStore('socket', {
       if (!this.socket) return
       this.socket.emit('call:stop', this.outgoingCallUser)
       this.outgoingCallUser = null
-      router.push('/home')
     },
 
     rejectCall() {
@@ -204,7 +201,6 @@ export const useSocketStore = defineStore('socket', {
 
       this.outgoingCallUser = this.incomingUserCall
       this.incomingUserCall = null
-      router.push('/call')
     },
 
     createPeerConnection() {
@@ -213,6 +209,12 @@ export const useSocketStore = defineStore('socket', {
       }
 
       this.peerConnection = new RTCPeerConnection(config)
+      this.peerConnection.addTransceiver('video', { direction: 'sendrecv' })
+      this.peerConnection.addTransceiver('audio', { direction: 'sendrecv' })
+      this.peerConnection.addTransceiver('video', {
+        direction: 'sendrecv',
+      })
+
       this.peerConnection.addEventListener('icecandidate', (e: RTCPeerConnectionIceEvent) => {
         if (null === e.candidate) {
           return
@@ -228,21 +230,23 @@ export const useSocketStore = defineStore('socket', {
       })
 
       this.peerConnection.addEventListener('track', (e) => {
-        if (e.streams.length > 0) {
-          const stream = e.streams[0]
+        console.group('event add track')
 
-          if (stream.getVideoTracks().length > 0 && stream.getAudioTracks().length > 0) {
-            console.log('📷 Adding camera/mic stream')
-            this.remoteStream = stream
-          } else {
-            console.log('🖥️ Adding screen share stream')
-            this.remoteScreenStream = stream
-          }
+        if (e.transceiver.mid === '2') {
+          console.log('add screen tack')
+
+          this.remoteScreenStream.addTrack(e.track)
+        } else {
+          console.log('add other tack')
+          this.remoteStream.addTrack(e.track)
         }
+        console.groupEnd()
       })
     },
 
     async createOffer() {
+      console.log('CREATE OFFER')
+
       if (!this.isCaller) {
         return
       }
